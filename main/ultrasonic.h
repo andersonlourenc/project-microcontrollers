@@ -1,3 +1,4 @@
+
 #ifndef ULTRASONIC_H
 #define ULTRASONIC_H
 
@@ -16,14 +17,9 @@ long readDistanceCM() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
 
-  long duration = pulseIn(ECHO_PIN, HIGH);
-  long distance = duration * 0.034 / 2;
-  
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
-
-  return distance;
+  long duration = pulseIn(ECHO_PIN, HIGH, 20000);
+  if (duration == 0) return -1;
+  return duration * 0.034 / 2;
 }
 
 #endif
