@@ -256,6 +256,23 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       font-weight: 600;
       letter-spacing: 1px;
     }
+    .speed-control {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 4px;
+    }
+    .speed-label {
+      font-size: 0.9rem;
+      color: #ffb300;
+      font-weight: 500;
+    }
+    .speed-slider {
+      width: 200px;
+      accent-color: #ffb300;
+      height: 8px;
+    }
   </style>
 </head>
 <body>
@@ -279,15 +296,19 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       <button id="btnManual" class="mode-btn" onclick="setMode(false)" aria-label="Modo manual com anticolisão" tabindex="0">Manual + Anticolisão</button>
       <span class="mode-label" id="modeLabel">Modo: Autônomo</span>
     </div>
+    <div class="speed-control">
+      <div class="speed-label">Velocidade: <span id="speedValue">255</span></div>
+      <input type="range" min="50" max="255" value="255" class="speed-slider" id="speedSlider" oninput="setSpeed()" aria-label="Controle de velocidade" tabindex="0">
+    </div>
     <div class="dpad">
       <div></div>
-      <button class="dpad-btn" onclick="sendCmd('forward')" title="Frente" aria-label="Mover para frente" tabindex="0">&#9650;</button>
+      <button class="dpad-btn" onmousedown="startCommand('forward')" onmouseup="stopCommand()" ontouchstart="startCommand('forward')" ontouchend="stopCommand()" title="Frente" aria-label="Mover para frente" tabindex="0">&#9650;</button>
       <div></div>
-      <button class="dpad-btn" onclick="sendCmd('left')" title="Esquerda" aria-label="Mover para esquerda" tabindex="0">&#9664;</button>
+      <button class="dpad-btn" onmousedown="startCommand('left')" onmouseup="stopCommand()" ontouchstart="startCommand('left')" ontouchend="stopCommand()" title="Esquerda" aria-label="Mover para esquerda" tabindex="0">&#9664;</button>
       <button class="dpad-btn" onclick="sendCmd('stop')" title="Parar" aria-label="Parar" tabindex="0">&#9679;</button>
-      <button class="dpad-btn" onclick="sendCmd('right')" title="Direita" aria-label="Mover para direita" tabindex="0">&#9654;</button>
+      <button class="dpad-btn" onmousedown="startCommand('right')" onmouseup="stopCommand()" ontouchstart="startCommand('right')" ontouchend="stopCommand()" title="Direita" aria-label="Mover para direita" tabindex="0">&#9654;</button>
       <div></div>
-      <button class="dpad-btn" onclick="sendCmd('reverse')" title="Ré" aria-label="Mover para trás" tabindex="0">&#9660;</button>
+      <button class="dpad-btn" onmousedown="startCommand('reverse')" onmouseup="stopCommand()" ontouchstart="startCommand('reverse')" ontouchend="stopCommand()" title="Ré" aria-label="Mover para trás" tabindex="0">&#9660;</button>
       <div></div>
     </div>
     <div class="servo-controls">
@@ -309,9 +330,36 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     </div>
   </div>
   <script>
+    let currentCommand = 'stop';
+    let commandInterval = null;
+    
     function sendCmd(cmd) {
+      currentCommand = cmd;
       fetch('/' + cmd, {method: 'GET'});
     }
+    
+    function startCommand(cmd) {
+      if (currentCommand !== cmd) {
+        currentCommand = cmd;
+        fetch('/' + cmd, {method: 'GET'});
+      }
+    }
+    
+    function stopCommand() {
+      if (currentCommand !== 'stop') {
+        currentCommand = 'stop';
+        fetch('/stop', {method: 'GET'});
+      }
+    }
+    
+    // Garantir que o comando pare quando o mouse sair do botão
+    document.addEventListener('mouseup', function() {
+      stopCommand();
+    });
+    
+    document.addEventListener('touchend', function() {
+      stopCommand();
+    });
     function updateServo(axis) {
       let val = document.getElementById('servo' + axis).value;
       document.getElementById('servo' + axis + 'Val').innerText = val + '°';
@@ -347,6 +395,12 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       document.getElementById('btnManual').classList.toggle('active', !auto);
       document.getElementById('modeLabel').innerText = auto ? 'Modo: Autônomo' : 'Modo: Manual + Anticolisão';
       fetch('/set_mode?auto=' + (auto ? '1' : '0'));
+    }
+    
+    function setSpeed() {
+      let speed = document.getElementById('speedSlider').value;
+      document.getElementById('speedValue').innerText = speed;
+      fetch('/set_speed?speed=' + speed);
     }
     function setLedIntensity() {
       let val = document.getElementById('ledSlider').value;

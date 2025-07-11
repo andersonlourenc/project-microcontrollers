@@ -5,9 +5,9 @@
 #define TRIG_PIN 14
 #define ECHO_PIN 12
 
-// Segundo sensor ultrassônico
-#define TRIG_PIN_2 34
-#define ECHO_PIN_2 35
+// Segundo sensor ultrassônico (mudando para pinos mais compatíveis)
+#define TRIG_PIN_2 15
+#define ECHO_PIN_2 13
 
 void setupUltrasonic() {
   pinMode(TRIG_PIN, OUTPUT);
